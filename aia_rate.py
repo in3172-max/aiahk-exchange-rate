@@ -44,13 +44,18 @@ def extract_all_rates(data):
 
 def save_all_rates_to_csv(rates_dict, filename="aia_all_rates.csv"):
     """將所有貨幣匯率記錄到CSV（寬格式：日期,usd,rmb,eur...）"""
+    # 確保輸出資料夾存在
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)
+    full_path = os.path.join(output_dir, filename)
+
     try:
         today_date = datetime.now().strftime("%Y-%m-%d")
         currency_order = ['usd', 'aus', 'rmb', 'can', 'chf', 'pound', 
                           'peso', 'mop', 'nt', 'sing', 'nzd', 'euro', 'yen']
-        file_exists = os.path.isfile(filename)
+        file_exists = os.path.isfile(full_path)
         if file_exists:
-            with open(filename, 'r', encoding='utf-8-sig') as f:
+            with open(full_path, 'r', encoding='utf-8-sig') as f:
                 reader = csv.reader(f)
                 rows = list(reader)
                 if len(rows) > 1:
@@ -60,12 +65,12 @@ def save_all_rates_to_csv(rates_dict, filename="aia_all_rates.csv"):
                         return
         header = ['日期'] + [curr.upper() for curr in currency_order]
         new_row = [today_date] + [rates_dict.get(curr, '') for curr in currency_order]
-        with open(filename, 'a', newline='', encoding='utf-8-sig') as f:
+        with open(full_path, 'a', newline='', encoding='utf-8-sig') as f:
             writer = csv.writer(f)
             if not file_exists:
                 writer.writerow(header)
             writer.writerow(new_row)
-        print(f"✅ 已記錄 {today_date} 的所有貨幣匯率")
+        print(f"✅ 已記錄 {today_date} 的所有貨幣匯率至 {full_path}")
         # === 已移除 detailed 檔案的寫入 ===
     except Exception as e:
         print(f"❌ 匯率檔案寫入錯誤：{e}")
@@ -113,12 +118,17 @@ def extract_latest_fund_price(data, fund_code):
 
 def save_fund_price_to_csv(date_str, price, fund_code, filename_prefix="aia_fund"):
     """將單一基金的價格記錄到獨立的 CSV 檔案（只保留日期與價格）"""
+    # 確保輸出資料夾存在
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)
     filename = f"{filename_prefix}_{fund_code}.csv"
-    file_exists = os.path.isfile(filename)
+    full_path = os.path.join(output_dir, filename)
+
+    file_exists = os.path.isfile(full_path)
 
     # 檢查今天是否已記錄（避免重複）
     if file_exists:
-        with open(filename, 'r', encoding='utf-8-sig') as f:
+        with open(full_path, 'r', encoding='utf-8-sig') as f:
             reader = csv.reader(f)
             rows = list(reader)
             if len(rows) > 1:  # 有標題列和至少一筆資料
@@ -128,13 +138,13 @@ def save_fund_price_to_csv(date_str, price, fund_code, filename_prefix="aia_fund
                     return
 
     # 寫入新記錄（不再包含記錄時間）
-    with open(filename, 'a', newline='', encoding='utf-8-sig') as f:
+    with open(full_path, 'a', newline='', encoding='utf-8-sig') as f:
         writer = csv.writer(f)
         if not file_exists:
             writer.writerow(['日期', '價格'])  # 標題列簡化
         writer.writerow([date_str, price])
 
-    print(f"✅ 基金 {fund_code} 於 {date_str} 的價格：{price} 已記錄至 {filename}")
+    print(f"✅ 基金 {fund_code} 於 {date_str} 的價格：{price} 已記錄至 {full_path}")
 
 def process_all_funds(fund_list, fund_cat="TMP2"):
     """處理多個基金，依次抓取並儲存"""
