@@ -46,7 +46,6 @@ def save_all_rates_to_csv(rates_dict, filename="aia_all_rates.csv"):
     """將所有貨幣匯率記錄到CSV（寬格式：日期,usd,rmb,eur...）"""
     try:
         today_date = datetime.now().strftime("%Y-%m-%d")
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         currency_order = ['usd', 'aus', 'rmb', 'can', 'chf', 'pound', 
                           'peso', 'mop', 'nt', 'sing', 'nzd', 'euro', 'yen']
         file_exists = os.path.isfile(filename)
@@ -67,16 +66,11 @@ def save_all_rates_to_csv(rates_dict, filename="aia_all_rates.csv"):
                 writer.writerow(header)
             writer.writerow(new_row)
         print(f"✅ 已記錄 {today_date} 的所有貨幣匯率")
-        detailed_filename = "aia_all_rates_detailed.csv"
-        with open(detailed_filename, 'a', newline='', encoding='utf-8-sig') as f:
-            writer = csv.writer(f)
-            if not os.path.isfile(detailed_filename):
-                writer.writerow(['記錄時間'] + [curr.upper() for curr in currency_order])
-            writer.writerow([current_time] + [rates_dict.get(curr, '') for curr in currency_order])
+        # === 已移除 detailed 檔案的寫入 ===
     except Exception as e:
         print(f"❌ 匯率檔案寫入錯誤：{e}")
 
-# ================== 基金相關函數 (新增) ==================
+# ================== 基金相關函數 (修改) ==================
 def fetch_fund_data(api_base_url, fund_code, fund_cat="TMP2"):
     """呼叫基金API取得特定基金的數據"""
     full_url = f"{api_base_url}?fund_code={fund_code}&fund_cat={fund_cat}"
@@ -118,24 +112,28 @@ def extract_latest_fund_price(data, fund_code):
         return None, None
 
 def save_fund_price_to_csv(date_str, price, fund_code, filename_prefix="aia_fund"):
-    """將單一基金的價格記錄到獨立的 CSV 檔案"""
+    """將單一基金的價格記錄到獨立的 CSV 檔案（只保留日期與價格）"""
     filename = f"{filename_prefix}_{fund_code}.csv"
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     file_exists = os.path.isfile(filename)
+
+    # 檢查今天是否已記錄（避免重複）
     if file_exists:
         with open(filename, 'r', encoding='utf-8-sig') as f:
             reader = csv.reader(f)
             rows = list(reader)
-            if len(rows) > 1:
+            if len(rows) > 1:  # 有標題列和至少一筆資料
                 last_row = rows[-1]
                 if len(last_row) >= 1 and last_row[0] == date_str:
                     print(f"⚠️ 基金 {fund_code} 日期 {date_str} 的價格已記錄過，跳過")
                     return
+
+    # 寫入新記錄（不再包含記錄時間）
     with open(filename, 'a', newline='', encoding='utf-8-sig') as f:
         writer = csv.writer(f)
         if not file_exists:
-            writer.writerow(['日期', '記錄時間', '價格'])
-        writer.writerow([date_str, now, price])
+            writer.writerow(['日期', '價格'])  # 標題列簡化
+        writer.writerow([date_str, price])
+
     print(f"✅ 基金 {fund_code} 於 {date_str} 的價格：{price} 已記錄至 {filename}")
 
 def process_all_funds(fund_list, fund_cat="TMP2"):
@@ -153,7 +151,7 @@ def process_all_funds(fund_list, fund_cat="TMP2"):
                 print(f"❌ 無法提取基金 {fund_code} 的價格")
         else:
             print(f"❌ 無法取得基金 {fund_code} 的API數據")
-        time.sleep(1)  # 避免請求過於頻繁
+        time.sleep(1)
     print("\n所有基金處理完畢！")
 
 # ================== 主程式 ==================
