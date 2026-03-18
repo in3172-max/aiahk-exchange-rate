@@ -1,21 +1,18 @@
 name: Daily AIA Exchange Rate
 
-# 觸發條件
 on:
   schedule:
-    # 每天 UTC 時間 1:00 執行（香港時間上午 9:00）
-    - cron: '0 1 * * *'
-  workflow_dispatch:   # 允許手動觸發
+    - cron: '0 1 * * *'   # 每天 UTC 1:00（香港時間 9:00）
+  workflow_dispatch:
 
-# 明確授予 GITHUB_TOKEN 寫入權限，以便推送 CSV 檔案
 permissions:
   contents: write
 
 jobs:
   run-script:
     runs-on: ubuntu-latest
-    # 設定環境變數，強制使用 Node.js 20（暫時避開 Node 24 問題）
     env:
+      # 允許在 Node.js 24 默認環境下繼續使用 Node.js 20 運行 Action
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
     steps:
       - name: Checkout code
@@ -34,11 +31,9 @@ jobs:
 
       - name: Commit and push CSV files
         env:
-          # 使用 GitHub 自動提供的 Token 進行認證
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add *.csv
-          # 檢查是否有檔案變更，若無則跳過 commit
           git diff --quiet && git diff --staged --quiet || (git commit -m "自動更新匯率 $(date +'%Y-%m-%d')" && git push)
