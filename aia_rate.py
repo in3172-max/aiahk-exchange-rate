@@ -43,15 +43,17 @@ def extract_all_rates(data):
     return rates
 
 def save_all_rates_to_csv(rates_dict, filename="aia_all_rates.csv"):
-    """將所有貨幣匯率記錄到CSV，新資料插入最上方"""
+    """將所有貨幣匯率記錄到CSV，新資料插入最上方（欄位標題為英文）"""
     output_dir = "output"
     os.makedirs(output_dir, exist_ok=True)
     full_path = os.path.join(output_dir, filename)
 
     today_date = datetime.now().strftime("%Y-%m-%d")
-    currency_order = ['usd', 'aus', 'rmb', 'can', 'chf', 'pound', 
+    # 貨幣代碼順序，將 'rmb' 改為 'cny'
+    currency_order = ['usd', 'aus', 'cny', 'can', 'chf', 'pound', 
                       'peso', 'mop', 'nt', 'sing', 'nzd', 'euro', 'yen']
-    header = ['日期'] + [curr.upper() for curr in currency_order]
+    # 標題列改為英文
+    header = ['Date'] + [curr.upper() for curr in currency_order]
     new_row = [today_date] + [rates_dict.get(curr, '') for curr in currency_order]
 
     # 讀取現有資料（如果檔案存在）
@@ -123,7 +125,7 @@ def extract_latest_fund_price(data, fund_code):
         return None, None
 
 def save_fund_price_to_csv(date_str, price, fund_code, filename_prefix="aia_fund"):
-    """將單一基金的價格記錄到獨立的 CSV 檔案，新資料插入最上方"""
+    """將單一基金的價格記錄到獨立的 CSV 檔案，新資料插入最上方（欄位標題為英文）"""
     output_dir = "output"
     os.makedirs(output_dir, exist_ok=True)
     filename = f"{filename_prefix}_{fund_code}.csv"
@@ -139,10 +141,11 @@ def save_fund_price_to_csv(date_str, price, fund_code, filename_prefix="aia_fund
         if len(existing_rows) > 1 and existing_rows[1] and existing_rows[1][0] == date_str:
             print(f"⚠️ 基金 {fund_code} 日期 {date_str} 的價格已記錄過（位於最上方），跳過")
             return
-        header_row = existing_rows[0] if existing_rows else ['日期', '價格']
+        # 標題列改為英文
+        header_row = existing_rows[0] if existing_rows else ['Date', 'Price']
         data_rows = existing_rows[1:] if len(existing_rows) > 1 else []
     else:
-        header_row = ['日期', '價格']
+        header_row = ['Date', 'Price']
         data_rows = []
 
     # 新行插入最前面
@@ -187,9 +190,9 @@ def main():
         all_rates = extract_all_rates(rate_data)
         if all_rates:
             save_all_rates_to_csv(all_rates)
-            # 顯示摘要
+            # 顯示摘要（貨幣代碼自動大寫）
             print("今日匯率摘要：")
-            for key in ['usd', 'rmb', 'euro', 'yen']:
+            for key in ['usd', 'cny', 'euro', 'yen']:
                 if key in all_rates:
                     print(f"  {key.upper()}: {all_rates[key]}")
         else:
