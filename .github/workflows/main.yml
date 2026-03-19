@@ -2,7 +2,7 @@ name: Daily AIA Exchange Rate
 
 on:
   schedule:
-    - cron: '0 1 * * *'   # 每天 UTC 1:00（香港時間 9:00）
+    - cron: '*/10 * * * *'   # 每天 UTC 1:00（香港時間 9:00）
   workflow_dispatch:
 
 permissions:
